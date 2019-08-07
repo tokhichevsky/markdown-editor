@@ -22,8 +22,9 @@ body {
 
 .edit_block {
     width: 100%;
-    height: 100%;
+    /* height: 100%; */
     overflow: hidden;
+    height: auto;
     border: 0px;
     resize: none;
     font-family: Arial, Helvetica, sans-serif;
@@ -44,7 +45,7 @@ blockquote {
     padding: 0 15px;
     margin-left: 0;
     color: #757575;
-    border-left: 5px solid #4b4b4b;
+    border-left: 4px solid #4b4b4b;
 }
 
 mark {
@@ -71,4 +72,8 @@ h1 {
 }
 br {
     margin: 10px;
+}
+
+code {
+    white-space: pre;
 }

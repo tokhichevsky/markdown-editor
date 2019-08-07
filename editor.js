@@ -11,8 +11,8 @@ class MarkdownText {
     constructor(text) {
         this.text = text;
         this.ParagraphHandler = new TextHandler(
-            /.+?(?:\n\n)/gm,
-            "<p>$&</p>"
+            /([^\n]+?)(\n\n)/gm,
+            "\n<p>$1</p>\n"
         );
 
         this.ParagraphHandler2 = new TextHandler(
@@ -21,7 +21,7 @@ class MarkdownText {
         );
 
         this.HeaderHandler = new TextHandler(
-            / *(#+ )(.+?)(?:\n|$)/gm,
+            /(?: |>)*(#+ )([^\n`]+?)(?:\n|$)/gm,
             function (str, p1, p2, offset, input) {
                 const header = `h${p1.length}`
                 return `<${header}>${p2}</${header}>`
@@ -29,18 +29,18 @@ class MarkdownText {
         );
 
         this.TextStyleHandler = new TextHandler(
-            /(\*+)([^\*\n]+?)(\*+)/gm,
-            function (str, p1, p2, p3, offset, input) {
+            /([^`*])(\*+)([^\*\n]+?)(\*+)([^`*])/gm,
+            function (str, undue1, leftStars, text, rightStars, undue2, offset, input) {
                 const styles = ["i", "b"];
-                const minStars = Math.min(p1.length, p3.length, 3);
-                const leftFreeStars = "*".repeat(p1.length - minStars);
-                const rightFreeStars = "*".repeat(p3.length - minStars);
-                const innerText = leftFreeStars + p2 + rightFreeStars;
-
+                const minStars = Math.min(leftStars.length, rightStars.length, 3);
+                const leftFreeStars = "*".repeat(leftStars.length - minStars);
+                const rightFreeStars = "*".repeat(rightStars.length - minStars);
+                const innerText = leftFreeStars + text + rightFreeStars;
+                console.log(undue1, leftStars, text, rightStars, undue2);
                 if (minStars > 2) {
-                    return `<${styles[0]}><${styles[1]}>${innerText}</${styles[0]}></${styles[1]}>`;
+                    return `${undue1}<${styles[0]}><${styles[1]}>${innerText}</${styles[0]}></${styles[1]}>${undue2}`;
                 }
-                return `<${styles[minStars - 1]}>${innerText}</${styles[minStars - 1]}>`;
+                return `${undue1}<${styles[minStars - 1]}>${innerText}</${styles[minStars - 1]}>${undue2}`;
             }
         )
 
@@ -76,11 +76,9 @@ class MarkdownText {
         )
 
         this.BlockquoteHandler = new TextHandler(
-            /^(»+) (.*)(?:\n|$)/gm, function (str, p1, p2, offset, input) {
-                const signNum = p1.length;
-                let br = "";
-                // if (p2.length === 0) br = "<br>";
-                return '<blockquote>\n'.repeat(signNum) + p2 + br + '\n</blockquote>'.repeat(signNum);
+            /^((?:&gt;)+) (.*)(?:\n|$)/gm, function (str, p1, p2, offset, input) {
+                const signNum = p1.length / 4;
+                return '<blockquote>'.repeat(signNum) + `<p>${p2}</p>` + '</blockquote>'.repeat(signNum);
             }
         )
 
@@ -88,14 +86,23 @@ class MarkdownText {
             /<\/blockquote><blockquote>/gm,
             ""
         )
+        this.CodeHandler = new TextHandler(
+            /&lt;[^`]+&gt;/gm,
+            "<code>$&</code>"
+        )
+
+        this.HRHandler = new TextHandler(
+            /^---$/gm,
+            "<hr>"
+        )
 
         this.AntiHTMLHandler = new TextHandler(
             /<|>/gm, function (str, offset, input) {
                 switch (str) {
                     case ">":
-                        return "»";
+                        return "&gt;";
                     case "<":
-                        return "«";
+                        return "&lt;";
                     default:
                         return str;
                 }
@@ -106,21 +113,37 @@ class MarkdownText {
     }
     getHTML(str) {
         let result = str;
+        // console.log("\nClear");
+        // console.log("-------------------------------");
+        // console.log(result);
         result = this.AntiHTMLHandler.convert(result);
-        console.log(result);
+        result = this.CodeHandler.convert(result);
+
+        result = this.HRHandler.convert(result);
         result = this.BlockquoteHandler.convert(result);
-        console.log(result);
+        // console.log("\nДо BlockquoteUniteHandler");
+        // console.log("-------------------------------");
+        // console.log(result);
         result = this.BlockquoteUniteHandler.convert(result);
+        // console.log("\nПосле BlockquoteUniteHandler");
+        // console.log("-------------------------------");
+        // console.log(result);
         result = this.OrderedListHandler.convert(result);
         result = this.UnorderedListHandler.convert(result);
         result = this.HeaderHandler.convert(result);
-        
+        // console.log("\nДо ParagraphHandler");
+        // console.log("-------------------------------");
+        // console.log(result);
+
         result = this.ParagraphHandler.convert(result);
-        result = this.SelectionHandler.convert(result);
+        // console.log("\nПосле");
+        // console.log("-------------------------------");
+        // console.log(result);
         result = this.TextStyleHandler.convert(result);
+        result = this.SelectionHandler.convert(result);
+
         result = this.PictureHandler.convert(result);
         result = this.LinkHandler.convert(result);
-        console.log(result);
 
         return result;
     }
@@ -128,10 +151,14 @@ class MarkdownText {
 
 const md_text = document.querySelector("#markdown");
 const preview = document.querySelector("#preview");
+
 preview.innerHTML = new MarkdownText(md_text.value).HTML;
+md_text.style.height = md_text.scrollHeight + "px"
 
 md_text.addEventListener("input", function () {
-    preview.innerHTML = new MarkdownText(md_text.value).HTML;
+    preview.innerHTML = new MarkdownText(this.value).HTML;
+    this.style.height = 100 + "px";
+    this.style.height = this.scrollHeight + "px";
 
 });
 
