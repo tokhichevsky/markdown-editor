@@ -13,10 +13,11 @@
 </head>
 
 <body>
-    <h1>Markdown Editor v0.2</h1>
+    <h1>Markdown Editor</h1>
+    <hr>
     <div class="fullsize-editor">
-        <div class="block">
-            <textarea id="markdown" class="edit_block" spellcheck="false">
+        <!-- <div class="block"> -->
+            <textarea id="markdown" class="edit_block block" spellcheck="false">
 # Intro
 > This is the first level of quoting.
 > 
@@ -45,12 +46,18 @@ Unordered lists can be started using the toolbar or by typing `* `, `- `, or `+ 
 ## What about images?
 ![Yes](https://i.imgur.com/sZlktY7.png)
         </textarea>
-        </div>
+
         <div class="vert-line"></div>
+
         <article id="preview" class="block">
         </article>
+        <div class="block loader">
+            <h2>Загрузка..</h2>
+        </div>
+        
     </div>
-    <script src="editor.js"></script>
+<script src="library/mdconverter.js"></script>
+<script src="editor.js"></script>
     
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/highlight.min.js"></script>
 </body>
