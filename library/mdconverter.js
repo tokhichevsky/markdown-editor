@@ -24,7 +24,7 @@ class MarkdownText {
             /(?: |>)*(#+ )([^\n`]+?)(?:\n|$)/gm,
             function (str, p1, p2, offset, input) {
                 const header = `h${p1.length}`
-                
+
                 return `<${header}>${p2}</${header}>`
             }
         );
@@ -35,7 +35,7 @@ class MarkdownText {
                 const minStars = Math.min(leftStars.length, rightStars.length, 3);
                 const leftFreeStars = leftStars.slice(0, -minStars);
                 const rightFreeStars = rightStars.slice(minStars);
-                
+
                 if (minStars > 2) {
                     return `${undue1}${leftFreeStars}<${styles[0]}><${styles[1]}>${text}</${styles[0]}></${styles[1]}>${rightFreeStars}${undue2}`;
                 }
@@ -49,7 +49,7 @@ class MarkdownText {
                 const minStars = Math.min(leftStars.length, rightStars.length, 3);
                 const leftFreeStars = leftStars.slice(0, -minStars);
                 const rightFreeStars = rightStars.slice(minStars);
-                
+
                 if (minStars > 2) {
                     return `${undue1}${leftFreeStars}<${styles[0]}><${styles[1]}>${text}</${styles[0]}></${styles[1]}>${rightFreeStars}${undue2}`;
                 }
@@ -59,8 +59,7 @@ class MarkdownText {
         this.Handler.List = new TextHandler(
             /(?:^ *(\d\.|\*|\+|-) .+\n?)+/gm,
             function (str, listType, offset, input) {
-                let lastSpaceNum = -1;
-                let openedTagsNum = 0;
+                let spacesOrder = [];
                 let tag, closeTag;
 
                 if (/\*|\+|-/g.test(listType)) {
@@ -72,21 +71,29 @@ class MarkdownText {
                 }
                 return tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
                     function (str, spaces, text, offset, input) {
-                        if (lastSpaceNum === -1) {
-                            lastSpaceNum = spaces.length;
-                        }
                         let template = `<li>${text}</li>`;
-                        if (spaces.length > lastSpaceNum) {
-                            openedTagsNum++;
-                            template = `${tag}<li>${text}</li>`;
-                        } else if (spaces.length < lastSpaceNum) {
-                            openedTagsNum--;
-                            template = `${closeTag}<li>${text}</li>`;
+
+                        if (spacesOrder.length > 0) {
+                            const lastSpaces = spacesOrder[spacesOrder.length - 1];
+                            if (spaces.length > lastSpaces) {
+
+                                template = tag + template;
+                            } else if (spaces.length < lastSpaces) {
+                                const oldSpacesOrderLength = spacesOrder.length;
+                                let cutSpaceOrderLength = spacesOrder.filter(x => x <= spaces.length).length - 1;
+                                if (cutSpaceOrderLength < 0) cutSpaceOrderLength = 0;
+                                spacesOrder = spacesOrder.slice(0, cutSpaceOrderLength);
+                                console.log(cutSpaceOrderLength, oldSpacesOrderLength, spacesOrder.length);
+                                template = closeTag.repeat(oldSpacesOrderLength - spacesOrder.length - 1)
+                                    + template;
+                            }
                         }
-                        lastSpaceNum = spaces.length;
+                        if (!spacesOrder.includes(spaces.length))
+                            spacesOrder.push(spaces.length);
+                        console.log(spacesOrder, template);
                         return template;
                     }
-                ) + closeTag.repeat(1 + openedTagsNum);
+                ) + closeTag;
             }
         );
         this.Handler.MarkCode = new TextHandler(
@@ -96,7 +103,7 @@ class MarkdownText {
                 const leftFreeSpecSim = "`".repeat(leftSpecSim.length - minSpecSim);
                 const rightFreeSpecSim = "`".repeat(rightSpecSim.length - minSpecSim);
                 let tag, closeTag;
-                
+
                 if (minSpecSim < 2) {
                     tag = "<mark>";
                     closeTag = "</mark>"
@@ -117,10 +124,10 @@ class MarkdownText {
             '<a href="$2">$1</a>'
         );
         this.Handler.Blockquote = new TextHandler(
-            /^((?:&gt;)+) (.*)(?:\n|$)/gm, 
+            /^((?:&gt;)+) (.*)(?:\n|$)/gm,
             function (str, p1, p2, offset, input) {
                 const signNum = p1.length / 4;
-                
+
                 return '<blockquote>'.repeat(signNum) + `<p>${p2}</p>` + '</blockquote>'.repeat(signNum);
             }
         );
@@ -175,7 +182,7 @@ class MarkdownText {
                     "\n": "<!-- newline! -->",
                     "~": "<!-- tilda! -->",
                 };
-                
+
                 Object.keys(dict).forEach((el) => {
                     str = str.replace(new RegExp(dict[el], "gm"), el);
                 });
