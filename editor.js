@@ -15,7 +15,6 @@ class LoadAwaiter {
         this._togglePrLoader =
             this._toggleDisplay.bind(null, this.target, this.loader);
         this._loadHandler = (elem) => {
-            console.log(this);
             this._totalObjects++;
             if (this._totalObjects === 1) {
                 this._togglePrLoader(true);
@@ -59,6 +58,36 @@ class LoadAwaiter {
         }
     }
 }
+
+function throttle(func, ms) {
+
+    let isThrottled = false,
+      savedArgs,
+      savedThis;
+  
+    function wrapper() {
+  
+      if (isThrottled) { // (2)
+        savedArgs = arguments;
+        savedThis = this;
+        return;
+      }
+  
+      func.apply(this, arguments); // (1)
+  
+      isThrottled = true;
+  
+      setTimeout(function() {
+        isThrottled = false; // (3)
+        if (savedArgs) {
+          wrapper.apply(savedThis, savedArgs);
+          savedArgs = savedThis = null;
+        }
+      }, ms);
+    }
+  
+    return wrapper;
+  }
 
 const texteditor = document.querySelector("#markdown");
 const preview = document.querySelector("#preview");
