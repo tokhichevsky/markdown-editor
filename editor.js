@@ -72,13 +72,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         hljs.highlightBlock(block);
     });
 });
-
-const IMGLoader = new LoadAwaiter(preview, previewloader, "IMG", function(target) {
+let useLoader = false;
+let IMGLoader;
+if (useLoader) {
+    IMGLoader= new LoadAwaiter(preview, previewloader, "IMG", function(target) {
     target.scrollTop = this.scrollPos;
 });
+}
 
 texteditor.addEventListener("input", function () {
+    if (useLoader) {
     IMGLoader.scrollPos = preview.scrollTop;
+    }
     preview.innerHTML = new MarkdownText(this.value).HTML;
     // this.style.height = 100 + "px";
     // this.style.height = this.scrollHeight + "px";
