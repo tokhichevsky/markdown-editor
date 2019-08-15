@@ -1,8 +1,70 @@
-const md_text = document.querySelector("#markdown");
+class LoadAwaiter {
+    constructor(target, loader, tag, OnLoad) {
+        this.target = target;
+        this.loader = loader;
+        this.tag = tag;
+        this.OnLoad = OnLoad;
+        this._totalObjects = 0;
+        this._loadedObjects = 0;
+        this._observerConfig = {
+            characterData: true,
+            attributes: false,
+            childList: true,
+            subtree: true,
+        };
+        this._togglePrLoader =
+            this._toggleDisplay.bind(null, this.target, this.loader);
+        this._loadHandler = (elem) => {
+            console.log(this);
+            this._totalObjects++;
+            if (this._totalObjects === 1) {
+                this._togglePrLoader(true);
+            }
+            self = this;
+            elem.addEventListener("load", function (event) {
+                self._loadedObjects++;
+                if (self._loadedObjects >= self._totalObjects) {
+                    self.OnLoad(target);
+                    self._togglePrLoader(false);
+                }
+            });
+        }
+        this._observer = new MutationObserver(mutations => {
+            for (let mutation of mutations) {
+                this._totalObjects = 0;
+                this._loadedObjects = 0;
+                for (let node of mutation.addedNodes) {
+                    this.tagSearcher(node, "IMG", this._loadHandler);
+                }
+            }
+        });
+        this._observer.observe(this.target, this._observerConfig);
+    }
+    tagSearcher (node, tag, handler) {
+        for (let child of node.childNodes) {
+            if (child.tagName === tag) {
+                handler(child);
+            }
+            
+            this.tagSearcher(child, tag, handler);
+        }
+    }
+    _toggleDisplay(el1, el2, open) {
+        if (open === false) {
+            el1.style.display = "";
+            el2.style.display = "none";
+        } else {
+            el2.style.display = "";
+            el1.style.display = "none";
+        }
+    }
+}
+
+const texteditor = document.querySelector("#markdown");
 const preview = document.querySelector("#preview");
 const previewloader = document.querySelector(".loader");
 previewloader.style.display = "none";
-preview.innerHTML = new MarkdownText(md_text.value).HTML;
+preview.innerHTML = new MarkdownText(texteditor.value).HTML;
 // md_text.style.height = md_text.scrollHeight + "px";
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -11,13 +73,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 });
 
-let scrollPos = preview.scrollTop;
+const IMGLoader = new LoadAwaiter(preview, previewloader, "IMG", function(target) {
+    target.scrollTop = this.scrollPos;
+});
 
-togglePrLoader =
-    toggleDisplay.bind(null, preview, previewloader);
-
-md_text.addEventListener("input", function () {
-    scrollPos = preview.scrollTop;
+texteditor.addEventListener("input", function () {
+    IMGLoader.scrollPos = preview.scrollTop;
     preview.innerHTML = new MarkdownText(this.value).HTML;
     // this.style.height = 100 + "px";
     // this.style.height = this.scrollHeight + "px";
@@ -25,57 +86,4 @@ md_text.addEventListener("input", function () {
         hljs.highlightBlock(block);
     });
 });
-
-function toggleDisplay(el1, el2, close) {
-    if (close === false) {
-        el1.style.display = "";
-        el2.style.display = "none";
-    } else {
-        el2.style.display = "";
-        el1.style.display = "none";
-    }
-}
-
-let totalImages = 0;
-let loadedImages = 0;
-
-
-function tagSearcher(node, tag, handler) {
-    for (let child of node.childNodes) {
-        if (child.tagName === tag) {
-            handler(child);
-        }
-        tagSearcher(child, tag, handler);
-    }
-}
-
-const observer = new MutationObserver(mutations => {
-    
-    for (let mutation of mutations) {
-        totalImages = 0;
-        loadedImages = 0;
-        for (let node of mutation.addedNodes) {
-            tagSearcher(node, "IMG", function(elem) {
-                totalImages++;
-                if (totalImages === 1) {
-                    togglePrLoader(true);
-                }
-                elem.addEventListener("load", function (event) {
-                    loadedImages++;
-                    if (loadedImages >= totalImages) {
-                        preview.scrollTop = scrollPos;
-                        togglePrLoader(false);
-                    }
-                });
-            });
-        }
-    }
-});
-const config = {
-    characterData: true,
-    attributes: false,
-    childList: true,
-    subtree: true,
-};
-observer.observe(preview, config);
 
