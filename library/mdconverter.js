@@ -83,14 +83,12 @@ class MarkdownText {
                                 let cutSpaceOrderLength = spacesOrder.filter(x => x <= spaces.length).length - 1;
                                 if (cutSpaceOrderLength < 0) cutSpaceOrderLength = 0;
                                 spacesOrder = spacesOrder.slice(0, cutSpaceOrderLength);
-                                console.log(cutSpaceOrderLength, oldSpacesOrderLength, spacesOrder.length);
                                 template = closeTag.repeat(oldSpacesOrderLength - spacesOrder.length - 1)
                                     + template;
                             }
                         }
                         if (!spacesOrder.includes(spaces.length))
                             spacesOrder.push(spaces.length);
-                        console.log(spacesOrder, template);
                         return template;
                     }
                 ) + closeTag;
@@ -111,7 +109,6 @@ class MarkdownText {
                     tag = "<pre><code>";
                     closeTag = "</code></pre>"
                 }
-                // console.log(`${undue1}${leftFreeSpecSim}${tag}${text.trim()}${closeTag}${rightFreeSpecSim}${undue2}`)
                 return `${leftFreeSpecSim}${tag}${text.trim()}${closeTag}${rightFreeSpecSim}`;
             }
         );
@@ -194,36 +191,19 @@ class MarkdownText {
     }
     getHTML(str) {
         let result = str;
-        // console.log("\nClear");
-        // console.log("-------------------------------");
-        // console.log(result);
         result = this.Handler.AntiHTML.convert(result);
         // result = this.Handler.HTMLCode.convert(result);
         result = this.Handler.InCodeReplacer.convert(result);
         result = this.Handler.HR.convert(result);
         result = this.Handler.Blockquote.convert(result);
-        // console.log("\nДо BlockquoteUniteHandler");
-        // console.log("-------------------------------");
-        // console.log(result);
         result = this.Handler.BlockquoteUnite.convert(result);
-        // console.log("\nПосле BlockquoteUniteHandler");
-        // console.log("-------------------------------");
-        // console.log(result);
         result = this.Handler.List.convert(result);
         result = this.Handler.Header.convert(result);
-        // console.log("\nДо ParagraphHandler");
-        // console.log("-------------------------------");
-        // console.log(result);
-
         result = this.Handler.Paragraph.convert(result);
-        // console.log("\nПосле");
-        // console.log("-------------------------------");
-        // console.log(result);
         result = this.Handler.TextStyle.convert(result);
         result = this.Handler.StrikeThrough.convert(result);
         result = this.Handler.InCodeBackReplacer.convert(result);
         result = this.Handler.MarkCode.convert(result);
-
         result = this.Handler.Picture.convert(result);
         result = this.Handler.Link.convert(result);
 
