@@ -8,6 +8,24 @@ class TextHandler {
     }
 }
 
+class ProcessedText {
+    constructor(text) {
+        this.text = text;
+        this.apply = (handler) => {
+            this.text = handler.convert(this.text);
+        }
+        this.applyQueue = (handlers) => {
+            for (let handler of handlers) {
+                this.apply(handler);
+            }
+        }
+    }
+    
+    toString() {
+        return this.text;
+    }
+}
+
 class MarkdownText {
     constructor(text) {
         this.text = text;
@@ -129,7 +147,7 @@ class MarkdownText {
             }
         );
         this.Handler.BlockquoteUnite = new TextHandler(
-            /<\/blockquote><blockquote>/gm,
+            /<\/blockquote>\n?<blockquote>/gm,
             ""
         );
         this.Handler.HTMLCode = new TextHandler(
@@ -190,23 +208,24 @@ class MarkdownText {
         this.HTML = this.getHTML(this.text);
     }
     getHTML(str) {
-        let result = str;
-        result = this.Handler.AntiHTML.convert(result);
-        // result = this.Handler.HTMLCode.convert(result);
-        result = this.Handler.InCodeReplacer.convert(result);
-        result = this.Handler.HR.convert(result);
-        result = this.Handler.Blockquote.convert(result);
-        result = this.Handler.BlockquoteUnite.convert(result);
-        result = this.Handler.List.convert(result);
-        result = this.Handler.Header.convert(result);
-        result = this.Handler.Paragraph.convert(result);
-        result = this.Handler.TextStyle.convert(result);
-        result = this.Handler.StrikeThrough.convert(result);
-        result = this.Handler.InCodeBackReplacer.convert(result);
-        result = this.Handler.MarkCode.convert(result);
-        result = this.Handler.Picture.convert(result);
-        result = this.Handler.Link.convert(result);
-
+        let result = new ProcessedText(str);
+        let queue = [
+            this.Handler.AntiHTML,
+            this.Handler.InCodeReplacer,
+            this.Handler.HR,
+            this.Handler.Blockquote,
+            this.Handler.BlockquoteUnite,
+            this.Handler.List,
+            this.Handler.Header,
+            this.Handler.Paragraph,
+            this.Handler.TextStyle,
+            this.Handler.StrikeThrough,
+            this.Handler.InCodeBackReplacer,
+            this.Handler.MarkCode,
+            this.Handler.Picture,
+            this.Handler.Link,
+        ];
+        result.applyQueue(queue);
 
         return result;
     }

@@ -17,14 +17,14 @@ class LoadAwaiter {
         this._loadHandler = (elem) => {
             this._totalObjects++;
             if (this._totalObjects === 1) {
-                this._togglePrLoader(true);
+                // this._togglePrLoader(true);
             }
             self = this;
             elem.addEventListener("load", function (event) {
                 self._loadedObjects++;
                 if (self._loadedObjects >= self._totalObjects) {
                     self.OnLoad(target);
-                    self._togglePrLoader(false);
+                    // self._togglePrLoader(false);
                 }
             });
         }
@@ -87,7 +87,7 @@ function throttle(func, ms) {
     }
   
     return wrapper;
-  }
+}
 
 const texteditor = document.querySelector("#markdown");
 const preview = document.querySelector("#preview");
@@ -101,23 +101,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
         hljs.highlightBlock(block);
     });
 });
-let useLoader = false;
+let useLoader = true;
 let IMGLoader;
 if (useLoader) {
     IMGLoader= new LoadAwaiter(preview, previewloader, "IMG", function(target) {
     target.scrollTop = this.scrollPos;
 });
 }
-
-texteditor.addEventListener("input", function () {
+function TECallback() {
     if (useLoader) {
-    IMGLoader.scrollPos = preview.scrollTop;
-    }
-    preview.innerHTML = new MarkdownText(this.value).HTML;
-    // this.style.height = 100 + "px";
-    // this.style.height = this.scrollHeight + "px";
-    document.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightBlock(block);
-    });
-});
+        IMGLoader.scrollPos = preview.scrollTop;
+        }
+        preview.innerHTML = new MarkdownText(this.value).HTML;
+        // this.style.height = 100 + "px";
+        // this.style.height = this.scrollHeight + "px";
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+}
+
+texteditor.addEventListener("input", throttle(TECallback, 100));
 
