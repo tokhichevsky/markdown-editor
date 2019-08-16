@@ -20,7 +20,7 @@ class ProcessedText {
             }
         }
     }
-    
+
     toString() {
         return this.text;
     }
@@ -139,16 +139,35 @@ class MarkdownText {
             '<a href="$2">$1</a>'
         );
         this.Handler.Blockquote = new TextHandler(
-            /^((?:&gt;)+) (.*)(?:\n|$)/gm,
-            function (str, p1, p2, offset, input) {
-                const signNum = p1.length / 4;
-
-                return '<blockquote>'.repeat(signNum) + `<p>${p2}</p>` + '</blockquote>'.repeat(signNum);
+            /(?:^(?:&gt;)+ .*(?:\n|$))+/gm,
+            function (str, offset, input) {
+                let lastSymNum = 0;
+                let a = '<blockquote>' + str.replace(
+                    /^((?:&gt;)+) (.*)(?:\n|$)/gm,
+                    function (str, symbols, text, offset, input) {
+                        const len = symbols.length/4;
+                        let result;
+                        const formatedText = `<p>${text}</p>`;
+                        
+                        if (lastSymNum === 0)
+                            lastSymNum = len;
+                        if (lastSymNum < len) {
+                            result = '<blockquote>'.repeat(len - lastSymNum) +
+                            formatedText;
+                        } else if (lastSymNum > len) {
+                            result = '</blockquote>\n'.repeat(lastSymNum - len) +
+                            formatedText;
+                        } else {
+                            result =  formatedText;
+                        }
+                        lastSymNum = len;
+                        console.log(result);
+                        return result;
+                    }
+                ) + '</blockquote>';
+                
+                return a;
             }
-        );
-        this.Handler.BlockquoteUnite = new TextHandler(
-            /<\/blockquote>\n?<blockquote>/gm,
-            ""
         );
         this.Handler.HTMLCode = new TextHandler(
             /&lt;[^`]+&gt;/gm,
@@ -214,7 +233,6 @@ class MarkdownText {
             this.Handler.InCodeReplacer,
             this.Handler.HR,
             this.Handler.Blockquote,
-            this.Handler.BlockquoteUnite,
             this.Handler.List,
             this.Handler.Header,
             this.Handler.Paragraph,

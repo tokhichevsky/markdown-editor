@@ -94,6 +94,11 @@ br {
     margin: 10px;
 }
 
+pre {
+    word-break: break-all;
+    hyphens: auto;
+    word-wrap: break-word;
+}
 code {
     white-space: pre;
     font-family: Arial, Helvetica, sans-serif;
