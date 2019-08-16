@@ -13,8 +13,12 @@
 </head>
 
 <body>
-    <h1>Markdown Editor</h1>
-    <hr>
+    <div class="page">
+    <div class="menu">
+        <div class="control-buttons"></div>
+        <div id="view-button" class="view-button button">Preview</div>
+        <!-- <div id="mobile-view" class="view-button button">Preview</div> -->
+    </div>
     <div class="fullsize-editor">
         <!-- <div class="block"> -->
             <textarea id="markdown" class="edit_block block" spellcheck="false">
@@ -47,7 +51,8 @@ Unordered lists can be started using the toolbar or by typing `* `, `- `, or `+ 
 ![Yes](https://i.imgur.com/sZlktY7.png)
         </textarea>
 
-        <div class="vert-line"></div>
+        <div class="vert-line">   
+        </div>
 
         <article id="preview" class="block">
         </article>
@@ -55,6 +60,7 @@ Unordered lists can be started using the toolbar or by typing `* `, `- `, or `+ 
             <h2>Загрузка..</h2>
         </div>
         
+    </div>
     </div>
 <script src="library/mdconverter.js"></script>
 <script src="editor.js"></script>

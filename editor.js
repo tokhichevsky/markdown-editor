@@ -39,12 +39,12 @@ class LoadAwaiter {
         });
         this._observer.observe(this.target, this._observerConfig);
     }
-    tagSearcher (node, tag, handler) {
+    tagSearcher(node, tag, handler) {
         for (let child of node.childNodes) {
             if (child.tagName === tag) {
                 handler(child);
             }
-            
+
             this.tagSearcher(child, tag, handler);
         }
     }
@@ -62,38 +62,83 @@ class LoadAwaiter {
 function throttle(func, ms) {
 
     let isThrottled = false,
-      savedArgs,
-      savedThis;
-  
+        savedArgs,
+        savedThis;
+
     function wrapper() {
-  
-      if (isThrottled) { // (2)
-        savedArgs = arguments;
-        savedThis = this;
-        return;
-      }
-  
-      func.apply(this, arguments); // (1)
-  
-      isThrottled = true;
-  
-      setTimeout(function() {
-        isThrottled = false; // (3)
-        if (savedArgs) {
-          wrapper.apply(savedThis, savedArgs);
-          savedArgs = savedThis = null;
+
+        if (isThrottled) { // (2)
+            savedArgs = arguments;
+            savedThis = this;
+            return;
         }
-      }, ms);
+
+        func.apply(this, arguments); // (1)
+
+        isThrottled = true;
+
+        setTimeout(function () {
+            isThrottled = false; // (3)
+            if (savedArgs) {
+                wrapper.apply(savedThis, savedArgs);
+                savedArgs = savedThis = null;
+            }
+        }, ms);
     }
-  
+
     return wrapper;
 }
 
-const texteditor = document.querySelector("#markdown");
-const preview = document.querySelector("#preview");
-const previewloader = document.querySelector(".loader");
-previewloader.style.display = "none";
-preview.innerHTML = new MarkdownText(texteditor.value).HTML;
+class ViewChangeButton {
+    constructor(button, editor, preview, statuses, startStatus = 0) {
+        this.button = button;
+        this.editor = editor;
+        this.preview = preview;
+        this.statuses = statuses.splice(1).concat(statuses);
+        this.status = startStatus < this.statuses.length - 1 ? startStatus : this.statuses.length - 1;
+        this.viewUpdate(this.status);
+        this.button.addEventListener("click", this.change.bind(this));
+    }
+    change() {
+        this.status = this.status < this.statuses.length - 1 ? this.status + 1 : 0;
+        this.viewUpdate(this.status);
+    }
+    viewUpdate(status) {
+        this.button.textContent = this.statuses[status];
+        switch (status) {
+            case 0:
+                this.editor.style.display = "none";
+                this.preview.style.display = "";
+                break;
+            case 1:
+                this.editor.style.display = "";
+                this.preview.style.display = "none";
+                break;
+            default:
+                this.editor.style.display = "";
+                this.preview.style.display = "";
+                break;
+        }
+    }
+}
+
+const $texteditor = document.querySelector("#markdown");
+const $preview = document.querySelector("#preview");
+const $previewloader = document.querySelector(".loader");
+const $view_button = document.querySelector(".menu #view-button");
+let viewChangeButton;
+if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    viewChangeButton = new ViewChangeButton($view_button, $texteditor, $preview,
+        ["Preview", "Editor"], 1) 
+  } else {
+    viewChangeButton= new ViewChangeButton($view_button, $texteditor, $preview,
+        ["Preview", "Editor", "Preview & Editor"], 2) 
+}
+
+
+
+$previewloader.style.display = "none";
+$preview.innerHTML = new MarkdownText($texteditor.value).HTML;
 // md_text.style.height = md_text.scrollHeight + "px";
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -104,21 +149,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
 let useLoader = true;
 let IMGLoader;
 if (useLoader) {
-    IMGLoader= new LoadAwaiter(preview, previewloader, "IMG", function(target) {
-    target.scrollTop = this.scrollPos;
-});
+    IMGLoader = new LoadAwaiter($preview, $previewloader, "IMG", function (target) {
+        target.scrollTop = this.scrollPos;
+    });
 }
 function TECallback() {
     if (useLoader) {
-        IMGLoader.scrollPos = preview.scrollTop;
-        }
-        preview.innerHTML = new MarkdownText(this.value).HTML;
-        // this.style.height = 100 + "px";
-        // this.style.height = this.scrollHeight + "px";
-        document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightBlock(block);
-        });
+        IMGLoader.scrollPos = $preview.scrollTop;
+    }
+    $preview.innerHTML = new MarkdownText(this.value).HTML;
+    // this.style.height = 100 + "px";
+    // this.style.height = this.scrollHeight + "px";
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightBlock(block);
+    });
 }
 
-texteditor.addEventListener("input", throttle(TECallback, 100));
+$texteditor.addEventListener("input", throttle(TECallback, 100));
 
