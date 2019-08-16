@@ -169,6 +169,10 @@ hr {
     .block {
         padding: 20px;
     }
+    .menu {
+        z-index: 100;
+        position: fixed;
+    }
     .menu .button {
         border: 1px solid rgb(180, 180, 180);
     }
