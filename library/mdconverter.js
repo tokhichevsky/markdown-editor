@@ -170,7 +170,7 @@ class MarkdownText {
                             result = formatedText;
                         }
                         lastSymNum = len;
-                        console.log(result);
+                        
                         return result;
                     }
                 ) + '</blockquote>';
