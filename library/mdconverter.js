@@ -1,9 +1,17 @@
 class TextHandler {
-    constructor(re, template) {
+    constructor(re, template, settings = {}) {
         this.re = re;
-        this.template = template;
+        this.settings = settings;
+        if (typeof (template) === "string")
+            this.template = template;
+        else if (typeof (template) === "function") {
+            this.template = template.bind(this.settings);
+        }
     }
     convert(str) {
+        return str.replace(this.re, this.template);
+    }
+    toString() {
         return str.replace(this.re, this.template);
     }
 }
@@ -20,7 +28,6 @@ class ProcessedText {
             }
         }
     }
-
     toString() {
         return this.text;
     }
@@ -46,32 +53,34 @@ class MarkdownText {
                 return `<${header}>${p2}</${header}>`
             }
         );
+        function _decorator(str, undue1, leftStars, text, rightStars, undue2, offset, input) {
+            const minStars = Math.min(leftStars.length, rightStars.length, 3);
+            const leftFreeStars = leftStars.slice(0, -minStars);
+            const rightFreeStars = rightStars.slice(minStars);
+
+            if (minStars > this.styles.length) {
+                return `${undue1}${leftFreeStars}<${this.styles[0]}><${this.styles[1]}>${text}</${this.styles[0]}></${this.styles[1]}>${rightFreeStars}${undue2}`;
+            }
+            return `${undue1}${leftFreeStars}<${this.styles[minStars - 1]}>${text}</${this.styles[minStars - 1]}>${rightFreeStars}${undue2}`;
+        };
         this.Handler.TextStyle = new TextHandler(
             /([^`*_])((?:\*|_)+)([^\*\n_]+?)((?:\*|_)+)([^`*_])/gm,
-            function (str, undue1, leftStars, text, rightStars, undue2, offset, input) {
-                const styles = ["i", "b"];
-                const minStars = Math.min(leftStars.length, rightStars.length, 3);
-                const leftFreeStars = leftStars.slice(0, -minStars);
-                const rightFreeStars = rightStars.slice(minStars);
-
-                if (minStars > 2) {
-                    return `${undue1}${leftFreeStars}<${styles[0]}><${styles[1]}>${text}</${styles[0]}></${styles[1]}>${rightFreeStars}${undue2}`;
+            _decorator,
+            {
+                styles: ["i", "b"],
+                get specSyms() {
+                    return ["*", "_"];
                 }
-                return `${undue1}${leftFreeStars}<${styles[minStars - 1]}>${text}</${styles[minStars - 1]}>${rightFreeStars}${undue2}`;
             }
         );
-        this.Handler.StrikeThrough = new TextHandler(
+        this.Handler.TextDecoration = new TextHandler(
             /([^`~])(~+)([^~\n]+?)(~+)([^`~])/gm,
-            function (str, undue1, leftStars, text, rightStars, undue2, offset, input) {
-                const styles = ["s", "u"];
-                const minStars = Math.min(leftStars.length, rightStars.length, 3);
-                const leftFreeStars = leftStars.slice(0, -minStars);
-                const rightFreeStars = rightStars.slice(minStars);
-
-                if (minStars > 2) {
-                    return `${undue1}${leftFreeStars}<${styles[0]}><${styles[1]}>${text}</${styles[0]}></${styles[1]}>${rightFreeStars}${undue2}`;
+            _decorator,
+            {
+                styles: ["u", "s"],
+                get specSyms() {
+                    return ["~"];
                 }
-                return `${undue1}${leftFreeStars}<${styles[minStars - 1]}>${text}</${styles[minStars - 1]}>${rightFreeStars}${undue2}`;
             }
         );
         this.Handler.List = new TextHandler(
@@ -145,27 +154,27 @@ class MarkdownText {
                 let a = '<blockquote>' + str.replace(
                     /^((?:&gt;)+) (.*)(?:\n|$)/gm,
                     function (str, symbols, text, offset, input) {
-                        const len = symbols.length/4;
+                        const len = symbols.length / 4;
                         let result;
                         const formatedText = `<p>${text}</p>`;
-                        
+
                         if (lastSymNum === 0)
                             lastSymNum = len;
                         if (lastSymNum < len) {
                             result = '<blockquote>'.repeat(len - lastSymNum) +
-                            formatedText;
+                                formatedText;
                         } else if (lastSymNum > len) {
                             result = '</blockquote>\n'.repeat(lastSymNum - len) +
-                            formatedText;
+                                formatedText;
                         } else {
-                            result =  formatedText;
+                            result = formatedText;
                         }
                         lastSymNum = len;
                         console.log(result);
                         return result;
                     }
                 ) + '</blockquote>';
-                
+
                 return a;
             }
         );
@@ -223,12 +232,7 @@ class MarkdownText {
                 return str;
             }
         );
-
-        this.HTML = this.getHTML(this.text);
-    }
-    getHTML(str) {
-        let result = new ProcessedText(str);
-        let queue = [
+        this.queue = [
             this.Handler.AntiHTML,
             this.Handler.InCodeReplacer,
             this.Handler.HR,
@@ -237,14 +241,24 @@ class MarkdownText {
             this.Handler.Header,
             this.Handler.Paragraph,
             this.Handler.TextStyle,
-            this.Handler.StrikeThrough,
+            this.Handler.TextDecoration,
             this.Handler.InCodeBackReplacer,
             this.Handler.MarkCode,
             this.Handler.Picture,
             this.Handler.Link,
         ];
+    }
+    
+    getHTML(str = this.text, queue = this.queue) {
+        let result = new ProcessedText(str);
         result.applyQueue(queue);
 
         return result;
     }
+
+    get HTML() {
+        return this.getHTML(this.text, this.queue);
+    }
+
+    
 }

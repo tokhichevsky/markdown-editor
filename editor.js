@@ -1,7 +1,6 @@
 class LoadAwaiter {
-    constructor(target, loader, tag, OnLoad) {
+    constructor(target, tag, OnLoad) {
         this.target = target;
-        this.loader = loader;
         this.tag = tag;
         this.OnLoad = OnLoad;
         this._totalObjects = 0;
@@ -12,8 +11,8 @@ class LoadAwaiter {
             childList: true,
             subtree: true,
         };
-        this._togglePrLoader =
-            this._toggleDisplay.bind(null, this.target, this.loader);
+        // this._togglePrLoader =
+        // this._toggleDisplay.bind(null, this.target, this.loader);
         this._loadHandler = (elem) => {
             this._totalObjects++;
             if (this._totalObjects === 1) {
@@ -89,6 +88,110 @@ function throttle(func, ms) {
     return wrapper;
 }
 
+class ControlElement {
+    constructor(handler, specSymLength) {
+        this.handler = handler;
+        this.specSymLength = specSymLength;
+
+    }
+}
+
+class ControlPanel {
+    constructor(controlPanelSelector, converter, textarea) {
+        this.panel = document.querySelector(controlPanelSelector);
+        this.converter = converter;
+        this.textarea = textarea;
+        this.controlElements = {
+            bold: new ControlElement(
+                converter.Handler.TextStyle,
+                2
+            ),
+            italic: new ControlElement(
+                converter.Handler.TextStyle,
+                1
+            ),
+            underline: new ControlElement(
+                converter.Handler.TextDecoration,
+                1
+            ),
+            strikethrough: new ControlElement(
+                converter.Handler.TextDecoration,
+                2
+            ),
+        }
+        this.panel.addEventListener("click", this.onClick.bind(this));
+    }
+
+    onClick(event) {
+        const type = event.target.classList[0];
+        const startSelection = this.textarea.selectionStart;
+        const endSelection = this.textarea.selectionEnd;
+        const selectedText = this.textarea.value.substring(startSelection, endSelection);
+        const controlEl = this.getControlElement(type);
+
+        if (selectedText.length) {
+            let startText = this.textarea.value.substring(0, startSelection);
+            let endText = this.textarea.value.substring(endSelection);
+            let add = false;
+            const selectionOptions = this.getSelectionOptions(startText, endText, controlEl.handler);
+
+            switch (selectionOptions.minSymsLength) {
+                case 0:
+                    add = true;
+                    break;
+                case 1:
+                case 2:
+                    if (controlEl.specSymLength === selectionOptions.minSymsLength)
+                        add = false;
+                    else
+                        add = true;
+                    break;
+                case 3:
+                    add = false;
+                    break;
+                default:
+                    add = false;
+                    break;
+            }
+            let sym = controlEl.handler.settings.specSyms[0];
+            if (add) {
+                this.textarea.value = startText + sym.repeat(controlEl.specSymLength) +
+                    selectedText + sym.repeat(controlEl.specSymLength) + endText;
+                this.textarea.selectionStart = startSelection + controlEl.specSymLength;
+                this.textarea.selectionEnd = endSelection + controlEl.specSymLength;
+                this.textarea.focus();
+            } else {
+                this.textarea.value = startText.slice(0, -controlEl.specSymLength) +
+                    selectedText + endText.slice(controlEl.specSymLength);
+                this.textarea.selectionStart = startSelection - controlEl.specSymLength;
+                this.textarea.selectionEnd = endSelection - controlEl.specSymLength;
+                this.textarea.focus();
+            }
+
+        }
+    }
+
+    getSelectionOptions(startText, endText, handler) {
+        let leftSymsLength = 0;
+        let rightSymsLength = 0;
+        let minSymsLength;
+        const restr = "(?:" + handler.settings.specSyms.join("|").replace(/\*/, "\\$&") + ")*";
+        const reStart = new RegExp(restr + "$");
+        const reEnd = new RegExp("^" + restr);
+
+        leftSymsLength = startText.match(reStart)[0].length;
+        rightSymsLength = endText.match(reEnd)[0].length;
+        minSymsLength = Math.min(leftSymsLength, rightSymsLength);
+        return {
+            minSymsLength
+        }
+    }
+
+    getControlElement(type) {
+        return this.controlElements[type];
+    }
+}
+
 class ViewChangeButton {
     constructor(button, editor, preview, statuses, startStatus = 0) {
         this.button = button;
@@ -122,48 +225,86 @@ class ViewChangeButton {
     }
 }
 
-const $texteditor = document.querySelector("#markdown");
-const $preview = document.querySelector("#preview");
-const $previewloader = document.querySelector(".loader");
-const $view_button = document.querySelector(".menu #view-button");
-let viewChangeButton;
-if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    viewChangeButton = new ViewChangeButton($view_button, $texteditor, $preview,
-        ["Preview", "Editor"], 1) 
-  } else {
-    viewChangeButton= new ViewChangeButton($view_button, $texteditor, $preview,
-        ["Preview", "Editor", "Preview & Editor"], 2) 
-}
+class MarkdownEditor {
+    constructor(textareaSelector, previewSelector,
+         viewChangeButtonSelector = undefined, highlighter = undefined) {
+        this.textarea = document.querySelector(textareaSelector);
+        this.preview = document.querySelector(previewSelector);
+        this.converter = new MarkdownText(this.textarea.value);
+        this.IMGLoadAwaiter = new LoadAwaiter(this.preview, "IMG",
+            function (target) {
+                target.scrollTop = this.scrollPos;
+            });
+        const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
 
+        Object.defineProperty(this.textarea, 'value', {
+            set(value) {
+                descriptor.set.call(this, value);
+                this.dispatchEvent(new Event('input'));
+            },
+            get() {
+                return descriptor.get.call(this);
+            }
+        });
 
+        if (viewChangeButtonSelector !== undefined) {
+            this.setViewChangeButton(viewChangeButtonSelector);
+        }
+        if (highlighter !== undefined) {
+            this.setCodeHandler(highlighter);
+        }
 
-$previewloader.style.display = "none";
-$preview.innerHTML = new MarkdownText($texteditor.value).HTML;
-// md_text.style.height = md_text.scrollHeight + "px";
-
-document.addEventListener('DOMContentLoaded', (event) => {
-    document.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightBlock(block);
-    });
-});
-let useLoader = true;
-let IMGLoader;
-if (useLoader) {
-    IMGLoader = new LoadAwaiter($preview, $previewloader, "IMG", function (target) {
-        target.scrollTop = this.scrollPos;
-    });
-}
-function TECallback() {
-    if (useLoader) {
-        IMGLoader.scrollPos = $preview.scrollTop;
+        this.preview.innerHTML = this.converter.HTML;
+        this.trOnInput = throttle(this.onInput, 100);
+        this.textarea.addEventListener("input", this.trOnInput.bind(this));
     }
-    $preview.innerHTML = new MarkdownText(this.value).HTML;
-    // this.style.height = 100 + "px";
-    // this.style.height = this.scrollHeight + "px";
-    document.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightBlock(block);
-    });
+
+    setViewChangeButton(buttonSelector) {
+        const $view_button = document.querySelector(buttonSelector);
+        
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
+                ["Preview", "Editor"], 1)
+        } else {
+            this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
+                ["Preview", "Editor", "Preview & Editor"], 2)
+        }
+    }
+
+    onInput(event) {
+        this.IMGLoadAwaiter.scrollPos = this.preview.scrollTop;
+        this.preview.innerHTML = this.converter.getHTML(this.textarea.value);
+        this.updateCodeBlocks();
+    }
+
+    setCodeHandler(highlighter) {
+        if (typeof (highlighter) !== "undefined") {
+            this.highlighter = highlighter;
+            document.addEventListener('DOMContentLoaded', (event) => {
+                document.querySelectorAll('pre code').forEach((block) => {
+                    this.highlighter.highlightBlock(block);
+                });
+            });
+        }
+    }
+
+    updateCodeBlocks() {
+        if (typeof (this.highlighter) !== "undefined") {
+            document.querySelectorAll('pre code').forEach((block) => {
+                this.highlighter.highlightBlock(block);
+            });
+        }
+    }
 }
 
-$texteditor.addEventListener("input", throttle(TECallback, 100));
+const mdEditor = new MarkdownEditor(
+    "#markdown", 
+    "#preview", 
+    ".menu #view-button", 
+    hljs);
 
+const controlPanel = new ControlPanel(
+    ".menu .control-buttons",
+    mdEditor.converter,
+    mdEditor.textarea
+)

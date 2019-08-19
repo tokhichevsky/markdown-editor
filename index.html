@@ -15,13 +15,16 @@
 <body>
     <div class="page">
     <div class="menu">
-        <div class="control-buttons"></div>
+        <div class="control-buttons">
+            <div class="bold button">b</div>
+            <div class="italic button">i</div>
+            <div class="underline button">u</div>
+            <div class="strikethrough button">s</div>
+        </div>
         <div id="view-button" class="view-button button">Preview</div>
-        <!-- <div id="mobile-view" class="view-button button">Preview</div> -->
     </div>
     <div class="fullsize-editor">
-        <!-- <div class="block"> -->
-            <textarea id="markdown" class="edit_block block" spellcheck="false">
+        <textarea id="markdown" class="edit_block block" spellcheck="false">
 # Intro
 > This is the first level of quoting.
 > 
@@ -56,16 +59,15 @@ Unordered lists can be started using the toolbar or by typing `* `, `- `, or `+ 
 
         <article id="preview" class="block">
         </article>
-        <div class="block loader">
-            <h2>Загрузка..</h2>
-        </div>
-        
+
     </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/highlight.min.js"></script>
 <script src="library/mdconverter.js"></script>
 <script src="editor.js"></script>
     
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/highlight.min.js"></script>
+
 </body>
 
 </html>
