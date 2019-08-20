@@ -214,6 +214,10 @@ hr {
     }
     
 }
-@media screen and (min-width: 801px) {
+@supports ((position:sticky) or (position:-webkit-sticky)){
+	.menu {
+		position: -webkit-sticky;
+		position: sticky;
+	}
 }
 
