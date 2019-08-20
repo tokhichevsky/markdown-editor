@@ -214,10 +214,4 @@ hr {
     }
     
 }
-@supports ((position:sticky) or (position:-webkit-sticky)){
-	.menu {
-		position: -webkit-sticky;
-		position: sticky;
-	}
-}
 
