@@ -209,6 +209,9 @@ hr {
     .fullsize-editor {
         bottom: auto;
     }
+    .fullsize-editor .vert-line {
+        display: none;
+    }
     
 }
 @media screen and (min-width: 801px) {

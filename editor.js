@@ -297,7 +297,7 @@ class MarkdownEditor {
         this.IMGLoadAwaiter.scrollPos = this.preview.scrollTop;
         this.preview.innerHTML = this.converter.getHTML(this.textarea.value);
         this.updateCodeBlocks();
-        if (this.isMobile) {
+        if (this.isMobile && this.textarea.style.display!=="none") {
             this.textarea.style.height = 100 + "px";
             this.textarea.style.height = this.textarea.scrollHeight + "px";
         }
