@@ -195,9 +195,9 @@ hr {
     display: none;
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-device-width: 800px) {
     .menu {
-        z-index: 100;
+        z-index: 1000;
         position: fixed;
     }
     .menu .button {
@@ -205,6 +205,9 @@ hr {
     }
     .menu .control-buttons .undo, .redo, .vert-line {
         display: block;
+    }
+    .fullsize-editor {
+        bottom: auto;
     }
     
 }

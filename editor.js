@@ -89,7 +89,7 @@ function throttle(func, ms) {
 }
 
 class ControlElement {
-    constructor(controlFunction, handler=null, specSymLength = 0) {
+    constructor(controlFunction, handler = null, specSymLength = 0) {
         this._controlFunction = controlFunction;
         this.handler = handler;
         this.specSymLength = specSymLength;
@@ -260,6 +260,7 @@ class MarkdownEditor {
         this.textarea = document.querySelector(textareaSelector);
         this.preview = document.querySelector(previewSelector);
         this.converter = new MarkdownText(this.textarea.value);
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         this.IMGLoadAwaiter = new LoadAwaiter(this.preview, "IMG",
             function (target) {
                 target.scrollTop = this.scrollPos;
@@ -272,6 +273,9 @@ class MarkdownEditor {
             this.setCodeHandler(highlighter);
         }
         this.preview.innerHTML = this.converter.HTML;
+        if (this.isMobile) {
+            this.textarea.style.height = this.textarea.scrollHeight + "px";
+        }
         this.render = throttle(this.onInput, 100);
         this.hisController = new TextareaHistoryController(this.textarea, this.render.bind(this));
         this.textarea.addEventListener("input", this.render.bind(this));
@@ -280,7 +284,7 @@ class MarkdownEditor {
     setViewChangeButton(buttonSelector) {
         const $view_button = document.querySelector(buttonSelector);
 
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        if (this.isMobile) {
             this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
                 ["Preview", "Editor"], 1)
         } else {
@@ -293,6 +297,10 @@ class MarkdownEditor {
         this.IMGLoadAwaiter.scrollPos = this.preview.scrollTop;
         this.preview.innerHTML = this.converter.getHTML(this.textarea.value);
         this.updateCodeBlocks();
+        if (this.isMobile) {
+            this.textarea.style.height = 100 + "px";
+            this.textarea.style.height = this.textarea.scrollHeight + "px";
+        }
     }
 
     setCodeHandler(highlighter) {
@@ -324,7 +332,7 @@ class MemoryStack {
 
     push(data) {
         const size = ++this._size;
-            this._storage[size] = this._current;
+        this._storage[size] = this._current;
         this._current = data;
     }
 
@@ -382,7 +390,7 @@ class TextareaHistoryController {
         this.history = new MemoryStack(state);
         this.deletedHistory = new MemoryStack();
         this.render = render;
-        
+
         document.addEventListener("keydown", this.onKeyDown.bind(this));
         this.textarea.addEventListener("input", throttle(this.onInput.bind(this), 100));
         document.addEventListener("select", this.onSelect.bind(this))
