@@ -54,6 +54,7 @@ body {
     width: 1px;
     background-color: #b8b8b8;
     height: auto;
+    margin: 5px;
 }
 
 blockquote {
@@ -171,6 +172,7 @@ hr {
     flex-direction: row;
     justify-content: space-between;
     text-transform: uppercase;
+    vertical-align: middle;
 }
 
 .menu .control-buttons .bold {
@@ -189,7 +191,9 @@ hr {
     text-decoration: line-through;
 }
 
-
+.menu .control-buttons .undo, .redo, .vert-line {
+    display: none;
+}
 
 @media screen and (max-width: 800px) {
     .menu {
@@ -199,6 +203,10 @@ hr {
     .menu .button {
         border: 1px solid rgb(180, 180, 180);
     }
+    .menu .control-buttons .undo, .redo, .vert-line {
+        display: block;
+    }
+    
 }
 @media screen and (min-width: 801px) {
 }
