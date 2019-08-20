@@ -275,10 +275,16 @@ class MarkdownEditor {
         this.preview.innerHTML = this.converter.HTML;
         if (this.isMobile) {
             this.textarea.style.height = this.textarea.scrollHeight + "px";
+            this.textarea.addEventListener('blur', function () {
+                setTimeout(function () {
+                    window.scrollTo(document.body.scrollLeft, document.body.scrollTop);
+                }, 0);
+            });
         }
         this.render = throttle(this.onInput, 100);
         this.hisController = new TextareaHistoryController(this.textarea, this.render.bind(this));
         this.textarea.addEventListener("input", this.render.bind(this));
+        
     }
 
     setViewChangeButton(buttonSelector) {
@@ -449,3 +455,4 @@ const controlPanel = new ControlPanel(
     ".menu .control-buttons",
     mdEditor
 )
+
