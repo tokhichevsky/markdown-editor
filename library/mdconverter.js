@@ -1,11 +1,13 @@
 class TextHandler {
-    constructor(re, template, settings = {}) {
+    constructor(re, template = "", settings = {}) {
         this.re = re;
         this.settings = settings;
+        this.settings.parent = this;
         if (typeof (template) === "string")
             this.template = template;
         else if (typeof (template) === "function") {
             this.template = template.bind(this.settings);
+            this.template._str = this.str;
         }
     }
     convert(str) {
@@ -35,6 +37,8 @@ class ProcessedText {
 
 class MarkdownText {
     constructor(text) {
+        const self = this;
+
         this.text = text;
         this.Handler = {};
         this.Handler.Paragraph = new TextHandler(
@@ -48,10 +52,10 @@ class MarkdownText {
         this.Handler.Header = new TextHandler(
             /(?: |(?:&gt;))*(#+) ([^\n`<>]+)(?:\n|$)?/gm,
             function (str, p1, p2, offset, input) {
-                console.log(str);
+                // console.log(str);
                 const header = `h${p1.length}`
 
-                const result =  `<${header}>${p2}</${header}>\n`;
+                const result = `<${header}>${p2}</${header}>\n`;
                 // console.log(result);
                 return result;
             }
@@ -99,8 +103,8 @@ class MarkdownText {
                     tag = "<ol>";
                     closeTag = "</ol>";
                 }
-                
-                let result =  tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
+
+                let result = tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
                     function (str, spaces, text, offset, input) {
                         let template = `<li>${text}</li>`;
 
@@ -147,10 +151,10 @@ class MarkdownText {
         );
         this.Handler.Picture = new TextHandler(
             /!\[(.+?)\]\((.+?)\)/gm,
-            '<p><img src="$2" alt="$1"></p>'
+            '<p><img src="$2" title="$1"></p>'
         );
         this.Handler.Link = new TextHandler(
-            /\[(.+?)\]\((.+?)\)/gm,
+            /\[([^\n\]\[]+?)\]\((.+?)\)/gm,
             '<a href="$2">$1</a>'
         );
         this.Handler.Blockquote = new TextHandler(
@@ -176,7 +180,7 @@ class MarkdownText {
                             result = formatedText;
                         }
                         lastSymNum = len;
-                        
+
                         return result;
                     }
                 ) + '</blockquote>';
@@ -238,6 +242,64 @@ class MarkdownText {
                 return str;
             }
         );
+        this.Handler.FootnotesToLinks = new TextHandler(
+            /[^]+/gm,
+            function (str, offset, input) {
+                const foundData = {};
+                str = str.replace(
+                    /\[([^\^\n\]\[]+)\]: ([^\n\s]+) ?(.*)$/gm,
+                    function (str, footnote, link, title, offset, input) {
+                        foundData[footnote] = {
+                            link,
+                            title,
+                        };
+                        return "";
+                    }
+                )
+                str = str.replace(
+                    /\[([^\^\n\]\[]+)\]\[(.+)\]/gm,
+                    function (str, text, footnote, offset, input) {
+                        const fn = foundData[footnote];
+                        if (fn) {
+                            return `<a href="${fn.link}" title="${fn.title}">${text}</a>`
+                        }
+                        return str;
+                    }
+                )
+                console.log(foundData)
+                return str;
+            }
+        );
+        this.Handler.Footnotes = new TextHandler(
+            /[^]+/gm,
+            function (str, offset, input) {
+                let end = "\n<hr>\n";
+                const foundData = [];
+
+                str = str.replace(
+                    /\[\^([^\n\]\[]+)\]: (.+)/gm,
+                    function(str, footnote, text, offset, input) {
+                        foundData.push(footnote);
+                        end += `<p><a id="${footnote}"></a>[${footnote}]:  ${text}</p>\n`
+                        return "";
+                    }
+                );
+                str = str.replace(
+                    /\[\^([^\n\]\[]+)\]/gm,
+                    function(str, footnote, offset, input) {
+                        console.log(footnote);
+                        if (foundData.indexOf(footnote) !== -1) {
+                            return `<sup><a href="#${footnote}">${footnote}</a></sup>`;
+                        }
+                        return str;
+                    }
+                )
+                if (foundData.length > 0)
+                    return str + end;
+                return str;
+            }
+        );
+
         this.queue = [
             this.Handler.AntiHTML,
             this.Handler.InCodeReplacer,
@@ -246,21 +308,24 @@ class MarkdownText {
             this.Handler.List,
             this.Handler.Header,
             this.Handler.Paragraph,
+            this.Handler.FootnotesToLinks,
+            this.Handler.Footnotes,
             this.Handler.TextStyle,
             this.Handler.TextDecoration,
             this.Handler.InCodeBackReplacer,
             this.Handler.MarkCode,
             this.Handler.Picture,
             this.Handler.Link,
+            
         ];
     }
-    
+
     getHTML(str = this.text, queue = this.queue) {
-        
+
         let result = new ProcessedText(str);
-        console.log(result.text);
+        // console.log(result.text);
         result.applyQueue(queue);
-        console.log(result.text);
+        // console.log(result.text);
         return result;
     }
 
@@ -268,5 +333,5 @@ class MarkdownText {
         return this.getHTML(this.text, this.queue);
     }
 
-    
+
 }
