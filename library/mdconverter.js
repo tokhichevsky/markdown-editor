@@ -217,6 +217,8 @@ class MarkdownText {
                     "#": "<!-- hash! -->",
                     "\n": "<!-- newline! -->",
                     "~": "<!-- tilda! -->",
+                    "\\[": "<!-- squarebracket1! -->",
+                    "\\]": "<!-- squarebracket2! -->",
                 };
 
                 Object.keys(dict).forEach((el) => {
@@ -234,6 +236,8 @@ class MarkdownText {
                     "#": "<!-- hash! -->",
                     "\n": "<!-- newline! -->",
                     "~": "<!-- tilda! -->",
+                    "\[": "<!-- squarebracket1! -->",
+                    "\]": "<!-- squarebracket2! -->",
                 };
 
                 Object.keys(dict).forEach((el) => {
@@ -308,8 +312,8 @@ class MarkdownText {
             this.Handler.List,
             this.Handler.Header,
             this.Handler.Paragraph,
-            this.Handler.FootnotesToLinks,
             this.Handler.Footnotes,
+            this.Handler.FootnotesToLinks,
             this.Handler.TextStyle,
             this.Handler.TextDecoration,
             this.Handler.InCodeBackReplacer,
