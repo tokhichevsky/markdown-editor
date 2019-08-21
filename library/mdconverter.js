@@ -46,11 +46,14 @@ class MarkdownText {
             "$&<br>"
         );
         this.Handler.Header = new TextHandler(
-            /(?: |>)*(#+ )([^\n`]+?)(?:\n|$)/gm,
+            /(?: |(?:&gt;))*(#+) ([^\n`<>]+)(?:\n|$)?/gm,
             function (str, p1, p2, offset, input) {
+                console.log(str);
                 const header = `h${p1.length}`
 
-                return `<${header}>${p2}</${header}>`
+                const result =  `<${header}>${p2}</${header}>\n`;
+                // console.log(result);
+                return result;
             }
         );
         function _decorator(str, undue1, leftStars, text, rightStars, undue2, offset, input) {
@@ -96,7 +99,8 @@ class MarkdownText {
                     tag = "<ol>";
                     closeTag = "</ol>";
                 }
-                return tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
+                
+                let result =  tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
                     function (str, spaces, text, offset, input) {
                         let template = `<li>${text}</li>`;
 
@@ -118,7 +122,9 @@ class MarkdownText {
                             spacesOrder.push(spaces.length);
                         return template;
                     }
-                ) + closeTag;
+                ) + closeTag.repeat(spacesOrder.length);
+                // console.log(result);
+                return result;
             }
         );
         this.Handler.MarkCode = new TextHandler(
@@ -250,9 +256,11 @@ class MarkdownText {
     }
     
     getHTML(str = this.text, queue = this.queue) {
+        
         let result = new ProcessedText(str);
+        console.log(result.text);
         result.applyQueue(queue);
-
+        console.log(result.text);
         return result;
     }
 

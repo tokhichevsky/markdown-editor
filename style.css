@@ -85,10 +85,7 @@ a:hover {
     color: rgb(0, 66, 110);
     
 }
-h1 {
-    color: #202020;
-    text-align: center;
-}
+
 br {
     margin: 10px;
 }
@@ -116,7 +113,7 @@ hr {
 
 .h1, .h2, .h3, h1, h2, h3 {
     margin-top: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .loader {
