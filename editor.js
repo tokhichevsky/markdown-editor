@@ -133,6 +133,9 @@ class ControlPanel {
             redo: new ControlElement(
                 this._ctrlRedo.bind(this)
             ),
+            clear: new ControlElement(
+                this._ctrlClear.bind(this)
+            )
         }
         this.panel.addEventListener("click", this.onClick.bind(this));
     }
@@ -162,6 +165,11 @@ class ControlPanel {
 
     getControlElement(type) {
         return this.controlElements[type];
+    }
+
+    _ctrlClear(controlEl) {
+        this.textarea.value = "";
+        this.textarea.dispatchEvent(new Event("input"));
     }
 
     _ctrlUndo(controlEl) {

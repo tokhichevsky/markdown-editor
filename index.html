@@ -7,27 +7,29 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/styles/atom-one-light.min.css">
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/styles/atom-one-light.min.css">
 
     <title>MarkDown Editor</title>
 </head>
 
 <body>
     <div class="page">
-    <div class="menu">
-        <div class="control-buttons">
-            <div class="undo button">↶</div>
-            <div class="redo button">↷</div>
-            <div class="vert-line"></div>
-            <div class="bold button">b</div>
-            <div class="italic button">i</div>
-            <div class="underline button">u</div>
-            <div class="strikethrough button">s</div>
+        <div class="menu">
+            <div class="control-buttons">
+                <div class="clear button">📄</div>
+                <div class="vert-line"></div>
+                <div class="undo button">↺</div>
+                <div class="redo button">↻</div>
+                <div class="vert-line"></div>
+                <div class="bold button">b</div>
+                <div class="italic button">i</div>
+                <div class="underline button">u</div>
+                <div class="strikethrough button">s</div>
+            </div>
+            <div id="view-button" class="view-button button">Preview</div>
         </div>
-        <div id="view-button" class="view-button button">Preview</div>
-    </div>
-    <div class="fullsize-editor">
-        <textarea id="markdown" class="edit_block block" spellcheck="false">
+        <div class="fullsize-editor">
+            <textarea id="markdown" class="edit_block block" spellcheck="false">
 # Использование языка разметки Markdown
 
 *Статья почти полностью взята из [документации Microsoft](https://docs.microsoft.com/ru-ru/contribute/how-to-write-use-markdown)*
@@ -273,19 +275,19 @@ CREATE TABLE T1 (
 - [The Markdown Guide](https://www.markdownguide.org/) (Руководство по Markdown)
         </textarea>
 
-        <div class="vert-line">   
+            <div class="vert-line">
+            </div>
+
+            <article id="preview" class="block">
+            </article>
+
         </div>
-
-        <article id="preview" class="block">
-        </article>
-
-    </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.9/highlight.min.js"></script>
-<script src="library/mdconverter.js"></script>
-<script src="editor.js"></script>
-    
+    <script src="library/mdconverter.js"></script>
+    <script src="editor.js"></script>
+
 
 </body>
 
