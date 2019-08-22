@@ -169,6 +169,7 @@ class ControlPanel {
 
     _ctrlClear(controlEl) {
         this.textarea.value = "";
+        this.textarea.textContent = "";
         this.textarea.dispatchEvent(new Event("input"));
     }
 
@@ -300,7 +301,7 @@ class MarkdownEditor {
 
         if (this.isMobile) {
             this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
-                ["Preview", "Editor"], 1)
+                ["👁", "✎"], 1)
         } else {
             this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
                 ["Preview", "Editor", "Preview & Editor"], 2)
