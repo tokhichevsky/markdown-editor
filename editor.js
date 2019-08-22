@@ -309,9 +309,15 @@ class MarkdownEditor {
     }
 
     onInput(event) {
+        
         this.IMGLoadAwaiter.scrollPos = this.preview.scrollTop;
-        this.preview.innerHTML = this.converter.getHTML(this.textarea.value);
-        this.updateCodeBlocks();
+        // this.preview.innerHTML = this.converter.getHTML(this.textarea.value);
+        const self = this;
+        async function htmlUpdate() {
+            self.preview.innerHTML = await self.converter.getHTML(self.textarea.value);
+            await self.updateCodeBlocks();
+        }
+        htmlUpdate();
         if (this.isMobile && this.textarea.style.display!=="none") {
             this.textarea.style.height = 100 + "px";
             this.textarea.style.height = this.textarea.scrollHeight + "px";
