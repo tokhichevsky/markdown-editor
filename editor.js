@@ -290,7 +290,7 @@ class MarkdownEditor {
                 }, 0);
             });
         }
-        this.render = throttle(this.onInput, 200);
+        this.render = throttle(this.onInput, 500);
         this.hisController = new TextareaHistoryController(this.textarea, this.render.bind(this));
         this.textarea.addEventListener("input", this.render.bind(this));
         
@@ -407,7 +407,7 @@ class TextareaHistoryController {
         this.render = render;
 
         document.addEventListener("keydown", this.onKeyDown.bind(this));
-        this.textarea.addEventListener("input", throttle(this.onInput.bind(this), 100));
+        this.textarea.addEventListener("input", throttle(this.onInput.bind(this), 200));
         this.textarea.addEventListener("select", this.onSelect.bind(this))
     }
 

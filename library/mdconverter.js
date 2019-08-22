@@ -63,18 +63,14 @@ class MarkdownText {
                 return result;
             }
         );
-        function _decorator(str, undue1, leftStars, text, rightStars, undue2, offset, input) {
-            const minStars = Math.min(leftStars.length, rightStars.length, 3);
-            const leftFreeStars = leftStars.slice(0, -minStars);
-            const rightFreeStars = rightStars.slice(minStars);
-
-            if (minStars > this.styles.length) {
-                return `${undue1}${leftFreeStars}<${this.styles[0]}><${this.styles[1]}>${text}</${this.styles[0]}></${this.styles[1]}>${rightFreeStars}${undue2}`;
+        function _decorator(str, stars, text, offset, input) {
+            if (stars.length > this.styles.length) {
+                return `<${this.styles[0]}><${this.styles[1]}>${text}</${this.styles[0]}></${this.styles[1]}>`;
             }
-            return `${undue1}${leftFreeStars}<${this.styles[minStars - 1]}>${text}</${this.styles[minStars - 1]}>${rightFreeStars}${undue2}`;
+            return `<${this.styles[stars.length - 1]}>${text}</${this.styles[stars.length - 1]}>`;
         };
         this.Handler.TextStyle = new TextHandler(
-            /([^`*_])((?:\*|_)+)([^\*\n_]+?)((?:\*|_)+)([^`*_])/gm,
+            /((?:\*|_)+)([^\*\n_]+?)\1/gm,
             _decorator,
             {
                 styles: ["i", "b"],
@@ -84,7 +80,7 @@ class MarkdownText {
             }
         );
         this.Handler.TextDecoration = new TextHandler(
-            /([^`~])(~+)([^~\n]+?)(~+)([^`~])/gm,
+            /(~+)([^~\n]+?)\1/gm,
             _decorator,
             {
                 styles: ["u", "s"],
@@ -137,21 +133,19 @@ class MarkdownText {
             }
         );
         this.Handler.MarkCode = new TextHandler(
-            /(`+)([^`]+?)(`+)/gm,
-            function (str, leftSpecSim, text, rightSpecSim, offset, input) {
-                const minSpecSim = Math.min(leftSpecSim.length, rightSpecSim.length);
-                const leftFreeSpecSim = "`".repeat(leftSpecSim.length - minSpecSim);
-                const rightFreeSpecSim = "`".repeat(rightSpecSim.length - minSpecSim);
-                let tag, closeTag;
-
-                if (minSpecSim < 2) {
+            /(`+)(?:([^\n\s`]+)\n)?([^`]+?)\1/gm,
+            function (str, specSymbols, codetype, text, offset, input) {
+                let tag, closeTag, codeclass = "";
+                if (codetype !== undefined)
+                    codeclass = codetype;
+                if (specSymbols.length < 2) {
                     tag = "<mark>";
                     closeTag = "</mark>"
                 } else {
-                    tag = "<pre><code>";
+                    tag = `<pre><code class="${codeclass}">`;
                     closeTag = "</code></pre>"
                 }
-                return `${leftFreeSpecSim}${tag}${text.trim()}${closeTag}${rightFreeSpecSim}`;
+                return `${tag}${text.trim()}${closeTag}`;
             }
         );
         this.Handler.Picture = new TextHandler(
