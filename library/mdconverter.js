@@ -26,7 +26,10 @@ class ProcessedText {
         }
         this.applyQueue = (handlers) => {
             for (let handler of handlers) {
+                // const t0 = performance.now();
                 this.apply(handler);
+                // const t1 = performance.now();
+                // console.log(handler, 'Took', (t1 - t0).toFixed(4))
             }
         }
     }
@@ -43,7 +46,7 @@ class MarkdownText {
         this.Handler = {};
         this.Handler.Paragraph = new TextHandler(
             /([^\n]+?)(\n\n)/gm,
-            "\n<p>$1</p>\n"
+            "\n<p>\n$1\n</p>\n"
         );
         this.Handler.Paragraph2 = new TextHandler(
             /.+?(?:\n\n)/gm,
@@ -106,7 +109,7 @@ class MarkdownText {
 
                 let result = tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
                     function (str, spaces, text, offset, input) {
-                        let template = `<li>${text}</li>`;
+                        let template = `<li>${text}`;
 
                         if (spacesOrder.length > 0) {
                             const lastSpaces = spacesOrder[spacesOrder.length - 1];
@@ -118,15 +121,17 @@ class MarkdownText {
                                 let cutSpaceOrderLength = spacesOrder.filter(x => x <= spaces.length).length - 1;
                                 if (cutSpaceOrderLength < 0) cutSpaceOrderLength = 0;
                                 spacesOrder = spacesOrder.slice(0, cutSpaceOrderLength);
-                                template = closeTag.repeat(oldSpacesOrderLength - spacesOrder.length - 1)
+                                template = closeTag.repeat(oldSpacesOrderLength - spacesOrder.length - 1) + "</li>"
                                     + template;
+                            } else {
+                                template = "</li>" + template;
                             }
                         }
                         if (!spacesOrder.includes(spaces.length))
                             spacesOrder.push(spaces.length);
                         return template;
                     }
-                ) + closeTag.repeat(spacesOrder.length);
+                ) + "</li>"+closeTag.repeat(spacesOrder.length);
                 // console.log(result);
                 return result;
             }
@@ -270,7 +275,6 @@ class MarkdownText {
                         return str;
                     }
                 )
-                console.log(foundData)
                 return str;
             }
         );
@@ -284,14 +288,13 @@ class MarkdownText {
                     /\[\^([^\n\]\[]+)\]: (.+)/gm,
                     function(str, footnote, text, offset, input) {
                         foundData.push(footnote);
-                        end += `<p><a id="${footnote}"></a>[${footnote}]:  ${text}</p>\n`
+                        end += `<p><a id="${footnote}"></a>&emsp;${footnote}. ${text}</p>\n`
                         return "";
                     }
                 );
                 str = str.replace(
                     /\[\^([^\n\]\[]+)\]/gm,
                     function(str, footnote, offset, input) {
-                        console.log(footnote);
                         if (foundData.indexOf(footnote) !== -1) {
                             return `<sup><a href="#${footnote}">${footnote}</a></sup>`;
                         }
@@ -303,9 +306,25 @@ class MarkdownText {
                 return str;
             }
         );
+        this.Handler.SpecSymbols = new TextHandler(
+            /\\(.)/gm,
+            function(str, symbol, offset, input) {
+                const newsymbol = this.specSymbols[symbol];
+                if (newsymbol !== undefined) {
+                    return newsymbol;
+                }
+                else return str;
+            },
+            {
+                specSymbols: {
+                    "`": "&#96;",
+                }
+            }
+        )
 
         this.queue = [
             this.Handler.AntiHTML,
+            this.Handler.SpecSymbols,
             this.Handler.InCodeReplacer,
             this.Handler.HR,
             this.Handler.Blockquote,
@@ -316,10 +335,11 @@ class MarkdownText {
             this.Handler.FootnotesToLinks,
             this.Handler.TextStyle,
             this.Handler.TextDecoration,
-            this.Handler.InCodeBackReplacer,
-            this.Handler.MarkCode,
+            
             this.Handler.Picture,
             this.Handler.Link,
+            this.Handler.InCodeBackReplacer,
+            this.Handler.MarkCode,
             
         ];
     }

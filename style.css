@@ -91,6 +91,7 @@ br {
 }
 
 pre {
+    -webkit-hyphens: auto;
     word-break: break-all;
     hyphens: auto;
     word-wrap: break-word;
@@ -112,7 +113,7 @@ hr {
 }
 
 .h1, .h2, .h3, h1, h2, h3 {
-    margin-top: 10px;
+    margin-top: 35px;
     margin-bottom: 8px;
 }
 
