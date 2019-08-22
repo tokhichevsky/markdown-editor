@@ -301,7 +301,7 @@ class MarkdownEditor {
 
         if (this.isMobile) {
             this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
-                ["👁", "✎"], 1)
+                ["👁️", "✏️"], 1)
         } else {
             this.viewChangeButton = new ViewChangeButton($view_button, this.textarea, this.preview,
                 ["Preview", "Editor", "Preview & Editor"], 2)
