@@ -26,10 +26,7 @@ class ProcessedText {
         }
         this.applyQueue = (handlers) => {
             for (let handler of handlers) {
-                // const t0 = performance.now();
                 this.apply(handler);
-                // const t1 = performance.now();
-                // console.log(handler, 'Took', (t1 - t0).toFixed(4))
             }
         }
     }
@@ -45,21 +42,28 @@ class MarkdownText {
         this.text = text;
         this.Handler = {};
         this.Handler.Paragraph = new TextHandler(
-            /([^\n]+?)(\n\n)/gm,
-            "\n<p>\n$1\n</p>\n"
+            /([^]+?)\n\n/gm,
+            function(str, text, offset, input) {
+                const trText = text.trim();
+
+                if (trText.length > 0) {
+                    return  `<p>\n${trText}\n</p>`;
+                }
+                return "";
+            }
+            
         );
         this.Handler.Paragraph2 = new TextHandler(
             /.+?(?:\n\n)/gm,
             "$&<br>"
         );
         this.Handler.Header = new TextHandler(
-            /(?: |(?:&gt;))*(#+) ([^\n`<>]+)(?:\n|$)?/gm,
+            /(?: |(?:&gt;))*(#+) ([^\n`<>\[\]]+)(?:\n|$)/gm,
             function (str, p1, p2, offset, input) {
-                // console.log(str);
+                this.specSyms = ["#"];
                 const header = `h${p1.length}`
 
-                const result = `<${header}>${p2}</${header}>\n`;
-                // console.log(result);
+                const result = `<${header}><a id="${p2}"></a>${p2}</${header}>\n`;
                 return result;
             }
         );
@@ -103,7 +107,7 @@ class MarkdownText {
                     closeTag = "</ol>";
                 }
 
-                let result = tag + str.replace(/( *)(?:\d\.|\*|\+|- )(.+)/gm,
+                let result = tag + str.replace(/( *)(?:(?:\d\.|\*|\+|-) +)(.+)/gm,
                     function (str, spaces, text, offset, input) {
                         let template = `<li>${text}`;
 
@@ -117,7 +121,7 @@ class MarkdownText {
                                 let cutSpaceOrderLength = spacesOrder.filter(x => x <= spaces.length).length - 1;
                                 if (cutSpaceOrderLength < 0) cutSpaceOrderLength = 0;
                                 spacesOrder = spacesOrder.slice(0, cutSpaceOrderLength);
-                                template = closeTag.repeat(oldSpacesOrderLength - spacesOrder.length - 1) + "</li>"
+                                template = "</li>"+closeTag.repeat(oldSpacesOrderLength - spacesOrder.length - 1) + "</li>"
                                     + template;
                             } else {
                                 template = "</li>" + template;
@@ -128,13 +132,13 @@ class MarkdownText {
                         return template;
                     }
                 ) + "</li>"+closeTag.repeat(spacesOrder.length);
-                // console.log(result);
                 return result;
             }
         );
         this.Handler.MarkCode = new TextHandler(
             /(`+)(?:([^\n\s`]+)\n)?([^`]+?)\1/gm,
             function (str, specSymbols, codetype, text, offset, input) {
+                this.specSyms = ["`"];
                 let tag, closeTag, codeclass = "";
                 if (codetype !== undefined)
                     codeclass = codetype;
@@ -159,21 +163,22 @@ class MarkdownText {
         this.Handler.Blockquote = new TextHandler(
             /(?:^(?:&gt;)+ .*(?:\n|$))+/gm,
             function (str, offset, input) {
+                this.specSyms = [">"];
                 let lastSymNum = 0;
                 let a = '<blockquote>' + str.replace(
                     /^((?:&gt;)+) (.*)(?:\n|$)/gm,
                     function (str, symbols, text, offset, input) {
                         const len = symbols.length / 4;
                         let result;
-                        const formatedText = `<p>${text}</p>`;
+                        const formatedText = `<p>\n${text}\n</p>`;
 
                         if (lastSymNum === 0)
                             lastSymNum = len;
                         if (lastSymNum < len) {
-                            result = '<blockquote>'.repeat(len - lastSymNum) +
+                            result = '<blockquote>\n'.repeat(len - lastSymNum) +
                                 formatedText;
                         } else if (lastSymNum > len) {
-                            result = '</blockquote>\n'.repeat(lastSymNum - len) +
+                            result = '\n</blockquote>\n'.repeat(lastSymNum - len) +
                                 formatedText;
                         } else {
                             result = formatedText;
@@ -341,9 +346,8 @@ class MarkdownText {
     getHTML(str = this.text, queue = this.queue) {
 
         let result = new ProcessedText(str);
-        // console.log(result.text);
+
         result.applyQueue(queue);
-        // console.log(result.text);
         return result;
     }
 

@@ -135,6 +135,25 @@ class ControlPanel {
             ),
             clear: new ControlElement(
                 this._ctrlClear.bind(this)
+            ),
+            mark: new ControlElement(
+                this._ctrlMarkCode.bind(this),
+                this.converter.Handler.MarkCode,
+                1
+            ),
+            code: new ControlElement(
+                this._ctrlMarkCode.bind(this),
+                this.converter.Handler.MarkCode,
+                3,
+
+            ),
+            header: new ControlElement(
+                this._ctrlHeaderQuote.bind(this),
+                this.converter.Handler.Header
+            ),
+            quote: new ControlElement(
+                this._ctrlHeaderQuote.bind(this),
+                this.converter.Handler.Blockquote
             )
         }
         this.panel.addEventListener("click", this.onClick.bind(this));
@@ -228,6 +247,69 @@ class ControlPanel {
 
         }
     }
+
+    _ctrlMarkCode(controlEl) {
+        const selectionStart = this.textarea.selectionStart;
+        const selectionEnd = this.textarea.selectionEnd;
+        const selectedText = this.textarea.value.substring(selectionStart, selectionEnd);
+
+        if (selectedText.length) {
+            let startText = this.textarea.value.substring(0, selectionStart);
+            let endText = this.textarea.value.substring(selectionEnd);
+            let add = false;
+            const selectionOptions = this.getSelectionOptions(startText, endText, controlEl.handler);
+
+            if (selectionOptions.minSymsLength === 0) {
+                add = true;
+            }
+            let sym = controlEl.handler.settings.specSyms[0];
+            if (add) {
+                this.textarea.value = startText + sym.repeat(controlEl.specSymLength) +
+                    selectedText + sym.repeat(controlEl.specSymLength) + endText;
+                this.textarea.selectionStart = selectionStart + controlEl.specSymLength;
+                this.textarea.selectionEnd = selectionEnd + controlEl.specSymLength;
+                this.textarea.focus();
+            } else {
+                this.textarea.value = startText.slice(0, -selectionOptions.minSymsLength) +
+                    selectedText + endText.slice(selectionOptions.minSymsLength);
+                this.textarea.selectionStart = selectionStart - selectionOptions.minSymsLength;
+                this.textarea.selectionEnd = selectionEnd - selectionOptions.minSymsLength;
+                this.textarea.focus();
+            }
+            this.textarea.dispatchEvent(new Event("input"));
+        }
+    }
+
+    _ctrlHeaderQuote(ControlEl) {
+        const selectionStart = this.textarea.selectionStart;
+        const selectionEnd = this.textarea.selectionEnd;
+        const selectedText = this.textarea.value.substring(selectionStart, selectionEnd);
+        let startText = this.textarea.value.substring(0, selectionStart);
+        let endText = this.textarea.value.substring(selectionEnd);
+        const sym = ControlEl.handler.settings.specSyms[0];
+        const reStart = new RegExp("([^\\n]*)$");
+        let shift = 0;
+        startText = startText.replace(reStart, function (str, text, offset, input) {
+            return text.replace(new RegExp("^((?:" + ControlEl.handler.settings.specSyms.join("|") + ")*)( *)"),
+                function (str, symbols, spaces, offset, input) {
+                    if (symbols.length < 6) {
+                        const result =  sym + symbols + " ";
+
+                        shift = result.length - str.length;
+                        return result;
+                    }
+                    shift = -str.length;
+                    return "";
+                });
+        });
+
+        this.textarea.value = startText + selectedText + endText;
+        this.textarea.selectionStart = selectionStart + shift;
+        this.textarea.selectionEnd = selectionEnd + shift;
+        this.textarea.focus();
+
+        this.textarea.dispatchEvent(new Event("input"));
+    }
 }
 
 class ViewChangeButton {
@@ -293,7 +375,7 @@ class MarkdownEditor {
         this.render = throttle(this.onInput, 500);
         this.hisController = new TextareaHistoryController(this.textarea, this.render.bind(this));
         this.textarea.addEventListener("input", this.render.bind(this));
-        
+
     }
 
     setViewChangeButton(buttonSelector) {
@@ -309,7 +391,7 @@ class MarkdownEditor {
     }
 
     onInput(event) {
-        
+
         this.IMGLoadAwaiter.scrollPos = this.preview.scrollTop;
         // this.preview.innerHTML = this.converter.getHTML(this.textarea.value);
         const self = this;
@@ -318,7 +400,7 @@ class MarkdownEditor {
             await self.updateCodeBlocks();
         }
         htmlUpdate();
-        if (this.isMobile && this.textarea.style.display!=="none") {
+        if (this.isMobile && this.textarea.style.display !== "none") {
             this.textarea.style.height = 100 + "px";
             this.textarea.style.height = this.textarea.scrollHeight + "px";
         }

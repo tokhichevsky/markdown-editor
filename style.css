@@ -213,6 +213,10 @@ hr {
     .menu .control-buttons .undo, .menu .control-buttons .redo, .menu .control-buttons .vert-line:nth-child(5) {
         display: flex;
     }
+    .menu .control-buttons .mark, .menu .control-buttons .code, .menu .control-buttons .vert-line:nth-child(10),
+    .menu .control-buttons .header, .menu .control-buttons .quote {
+        display: none;
+    }
     .fullsize-editor {
         bottom: auto;
     }
