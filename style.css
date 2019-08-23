@@ -148,7 +148,7 @@ hr {
     padding: 3px 7px;
     margin: 3px 3px 3px 3px;
     border-radius: 5px;
-    border: 1px solid rgba(180, 180, 180, 0);
+    border: 1px solid rgba(180, 180, 180, 40%);
     color: gray;
     min-width: 30px;
     min-height: 30px;
